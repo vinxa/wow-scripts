@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+
+    <script>
+      // called on submit.
+      function onSubmit() {
+        let userInput = document.getElementById("userInput").value;
+        google.script.run.withSuccessHandler(function(response) {
+          alert(response);
+        }).processInputWishlistsHtml(userInput);
+      }
+      
+      // Optional helper: auto-selects text for easier copying
+      function selectText(id) {
+        let element = document.getElementById(id);
+        if (element) {
+          element.select();
+        }
+      }
+    </script>
+
+  </head>
+<body style="font-family: Arial, sans-serif; margin: 20px; padding: 0; font-size:1em;">
+    <div id="instructions" style="background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 8px; padding: 20px; max-width: 600px; margin: auto;">
+        <h2 style="color: #333; text-align: center;">Instructions</h2>
+        <ol style="padding-left: 20px; line-height: 1.8;">
+            <li>
+                <strong style="color: #0078D7;">Copy</strong> the below:
+                <br>
+                <textarea id="copyText" rows="6" cols="50" readonly style="width: 100%; margin-top: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace;" onclick="this.select();">
+(() => {
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+        const mainHTML = mainEl.outerHTML;
+        prompt('Copy the HTML below:', mainHTML);
+    } else {
+        console.warn('<main> tag not found on this page.');
+    }
+})();
+                </textarea>
+            </li>
+            <li>
+                <strong style="color: #0078D7;">Go to:</strong>
+                <a href="https://wowaudit.com/us/frostmourne/predictive-text/predictive-text/wishlists/overview" target="_blank" style="color: #0078D7; text-decoration: none; font-size:0.75em;">https://wowaudit.com/us/frostmourne/predictive-text/predictive-text/wishlists/overview</a>
+            </li>
+            <li>
+                <strong style="color: #0078D7;">Press F12</strong>. Open the <strong style="color: #0078D7;">Console</strong> tab on the popup window/dialog.
+            </li>
+            <li>
+                <strong style="color: #0078D7;">Paste</strong> the text into the console >> prompt.
+            </li>
+            <li>
+                <strong style="color: #0078D7;">Copy the popup text</strong>
+            </li>
+            <li>
+                <strong style="color: #0078D7;">Paste</strong> that text <strong style="color: #0078D7;">here:</strong>
+                <br>
+                <input type="text" id="userInput" placeholder="Paste html snippet here" style="width: 100%; margin-top: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            </li>
+        </ol>
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="onSubmit()" style="background-color: #0078D7; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer;">Submit</button>
+        </div>
+    </div>
+</body>
+</html>
