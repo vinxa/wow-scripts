@@ -175,6 +175,8 @@ const itemBossDict = {
     "Excessively Bejeweled Curio": "Chrome King Gallywix"
 };
 
+const bossOrder = ["Vexie and the Geargrinders","Cauldron of Carnage","Rik Reverb","Stix Bunkjunker","Sprocketmonger Lockenstock","One-Armed Bandit","Mug'Zee","Chrome King Gallywix"]
+
 const wowClassDict = {
     "death-knight": {
         frost: "dps",
@@ -261,13 +263,36 @@ function stripTags(html) {
     return decoded.replace(/<[^>]*>/g, "").trim();
 }
 
-function emitRow(boss, itemName, classTag, specTag, isRaid, sourceTag) {
+function emitRow(boss, itemName, classTag, specTag, sourceTag, isRaid) {
     const key = `${boss}|${itemName}|${classTag}|${specTag}|${sourceTag}`; 
     if (!seenRecords.has(key)) {
         seenRecords.add(key);
         const prefix = isRaid ? "Raid" : "Full";
-        flatRows.push([boss, itemName, prefix, classTag, specTag, sourceTag]);
+        flatRows.push([boss, itemName, classTag, specTag, sourceTag, prefix]);
     }
+}
+
+function sortRows() {
+    // Set order of name to index
+    const orderMap = {};
+    bossOrder.forEach((name, index) => {
+      orderMap[name] = index;
+    });
+
+    flatRows.sort((a, b) => {
+      // custom order for column 0 (boss name)
+      const ra = orderMap[a[0]];
+      const rb = orderMap[b[0]];
+      if (ra !== rb) return ra-rb;
+
+      // for all other columns (index 1+) sort normally
+      for (let i = 1; i < a.length; i++) {
+        const cmp = a[i].localeCompare(b[i]);
+        if (cmp !== 0) return cmp;
+      }
+
+      return 0;
+    });
 }
 
 function appendSpreadsheet() {
@@ -278,7 +303,10 @@ function appendSpreadsheet() {
     } else {
         sheet.clearContents();
     }
-    const allRows = [["Boss", "Item", "Type", "Class", "Spec", "Source"]].concat(flatRows);
+
+
+    sortRows();
+    const allRows = [["Boss", "Item", "Class", "Spec", "Source", "Type"]].concat(flatRows);
     sheet.getRange(1, 1, allRows.length, allRows[0].length).setValues(allRows);
     SpreadsheetApp.flush();
 }

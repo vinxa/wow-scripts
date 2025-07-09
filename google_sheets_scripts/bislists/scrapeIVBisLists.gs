@@ -67,7 +67,7 @@ function processIvRow(rowHtml, wowClass, wowSpec, isRaid) {
 
     const boss = itemBossDict[itemName];
     if (boss) {
-      emitRow(boss, itemName, classFrag, specFrag, isRaid, "IV");
+      emitRow(boss, itemName, classFrag, specFrag, "IV", isRaid);
     }
   }
 }

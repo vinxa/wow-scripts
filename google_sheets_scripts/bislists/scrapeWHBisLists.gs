@@ -64,7 +64,7 @@ function processWhItems(items, wowClass, wowSpec, isRaid) {
             // Direct BIS lookup
             const boss = itemBossDict[itemName];
             if (boss) {
-                emitRow(boss, itemName, classFrag, specFrag, isRaid, "WH");
+                emitRow(boss, itemName, classFrag, specFrag, "WH", isRaid);
             }
     }
 }
