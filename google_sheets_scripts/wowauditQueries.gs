@@ -46,3 +46,30 @@ function queryWishlist(characterId) {
   const wishlistData = query(`https://wowaudit.com/v1/wishlists/${characterId}`);
   return wishlistData;
 }
+
+function queryWishlists(characterIds) {
+  const requests = characterIds.maps((id) => ({
+    url: "https://wowaudit.com/v1/wishlists/" + id,
+    method: "get",
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json' 
+      }
+  }))
+  const responses = UrlFetchApp.fetchAll(requests);
+  return responses.map((response, index) => {
+  try {
+    return {
+      id: characterIds[index],
+      data: JSON.parse(response.getContentText()),
+    };
+  } catch (e) {
+    console.error(`Failed to parse response for ID ${characterIds[index]}: ${e}`);
+    return {
+      id: characterIds[index],
+      data: null,
+      error: e.message,
+    };
+  }
+});
+}
