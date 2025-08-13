@@ -1,11 +1,11 @@
 import os
-from typing import List
+from typing import List, Optional, Literal
 import asyncio
 import discord
 from discord.ext import commands
 import gspread
-from tabulate import tabulate
 import logging
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 
@@ -14,7 +14,7 @@ WORKSHEET_NAME = os.environ.get("WORKSHEET_NAME")
 TOKEN = os.environ.get("DISCORD_TOKEN")
 GUILD_IDS = os.environ.get("DISCORD_GUILD_IDS","")
 
-## HELPERS
+## HELPERS #########################################################################################
 def _parse_guild_ids() -> list[int]:
     ids = []
     for s in GUILD_IDS.split(","):
@@ -31,8 +31,24 @@ def _safe(s: str, fallback: str = "—") -> str:
     s = (s or "").strip()
     return s if s else fallback
 
+def _format_date(s :str) -> str:
+    s = (s or "").strip()
+    if not s:
+        return "—"
+    try:
+        dt = datetime.strptime("%Y-%m-%dT%H:%M:%S.%fZ")
+        return dt.strftime("%o %b  %H:%M")
+    except ValueError:
+        return s
+
+## SHEETS #########################################################################################
+def _matches_difficulty(cell: str, wanted: Optional[str]) -> bool:
+    if not wanted:
+        return True
+    return (cell or "").strip().lower() == wanted.strip().lower()
+
 def find_matching_rows(
-    worksheet: gspread.worksheet.Worksheet, item_name: str) -> List[List[str]]:
+    worksheet: gspread.worksheet.Worksheet, item_name: str, difficulty: Optional[str] = None) -> List[List[str]]:
     all_values = worksheet.get_all_values()
     records = all_values[1:]  # Skip header
     results: List[List[str]] = []
@@ -40,7 +56,7 @@ def find_matching_rows(
     for row in records:
         padded_row = row + [""] * (11 - len(row))
         current_item = padded_row[5].strip().lower()
-        if current_item == target:
+        if current_item == target and _matches_difficulty(padded_row[3],difficulty):
             char_name = padded_row[0]
             spec_name = padded_row[1]
             report_date = padded_row[2]
@@ -90,11 +106,8 @@ def find_rows_by_boss(
     return results
 
 
-## EMBEDS
-
+## EMBEDS #########################################################################################
 MAX_FIELDS_PER_EMBED = 25
-
-
 def _row_to_three_inline_fields(row: List[str]) -> list[tuple[str, str]]:
     """Pack a single result row into THREE inline fields for a Discord embed.
     Returns a list of (name, value) pairs.
@@ -129,7 +142,6 @@ def _row_to_three_inline_fields(row: List[str]) -> list[tuple[str, str]]:
         (f3_name, f3_val),
     ]
 
-
 def build_embeds_from_rows(rows: List[List[str]], title: str) -> list[discord.Embed]:
     """Create a list of embeds with up to 8 rows per embed (3 fields per row = 24 fields)."""
     FIELDS_PER_ROW = 3
@@ -158,7 +170,6 @@ def build_embeds_from_rows(rows: List[List[str]], title: str) -> list[discord.Em
 
     return embeds
 
-
 class PaginatedEmbeds(discord.ui.View):
     """Simple Prev/Next pagination for a list of embeds."""
 
@@ -185,7 +196,8 @@ class PaginatedEmbeds(discord.ui.View):
         self.index = (self.index + 1) % len(self.embeds)
         await self.update(interaction)
 
-## BOT
+
+## BOT CTRL #########################################################################################
 class BossPickerView(discord.ui.View):
     """Interactive dropdown that lists bosses and prints matching rows on selection."""
     def __init__(self, worksheet: gspread.worksheet.Worksheet, bosses: List[str], *, timeout: float = 120):
@@ -213,16 +225,6 @@ class BossPickerView(discord.ui.View):
         if not results:
             await interaction.followup.send(f"No rows found for boss '{boss_name}'.")
             return
-
-        """
-        headers = ["Character", "Spec", "Date", "Difficulty", "Upgrade #", "Icy Veins", "Wowhead"]
-        table_str = tabulate(results, headers=headers, tablefmt="fancy_grid")
-
-        max_chunk_size = 1900
-        for i in range(0, len(table_str), max_chunk_size):
-            chunk = table_str[i : i + max_chunk_size]
-            await interaction.followup.send(f"```\n{chunk}\n```")
-        """
         embeds = build_embeds_from_rows(results, title=f"Wishes for {boss_name}")
         view = PaginatedEmbeds(embeds)
         await interaction.followup.send(embed=embeds[0], view=view)
@@ -255,22 +257,6 @@ class LootCommands(commands.Cog):
             return
         view = BossPickerView(self.worksheet, bosses)
         await interaction.followup.send("Pick a boss:", view=view)
-        """
-        headers = ["Character", "Spec", "Date", "Difficulty", "Upgrade #", "Icy Veins", "Wowhead"]
-        table_str = tabulate(results, headers=headers, tablefmt="fancy_grid")
-
-        max_chunk_size = 1900  # keep under 2000 incl. code fences
-        # First message continues the deferred response; subsequent ones are followups.
-        first = True
-        for i in range(0, len(table_str), max_chunk_size):
-            chunk = table_str[i : i + max_chunk_size]
-            content = f"```\n{chunk}\n```"
-            if first:
-                await interaction.followup.send(content)
-                first = False
-            else:
-                await interaction.followup.send(content)
-        """
 
     @discord.app_commands.command(name="boss",description="Look up a boss and show all wishes for its items.")
     async def boss(self, interaction: discord.Interaction):
