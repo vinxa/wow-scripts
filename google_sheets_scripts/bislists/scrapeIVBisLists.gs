@@ -61,7 +61,7 @@ function processIvRow(rowHtml, wowClass, wowSpec, isRaid) {
     if (itemName.includes(tierPhrase)) {
       const slotPrefix = tierSlotDict[slotName];
       if (slotPrefix) {
-        itemName = `${tierTokenDict[wowClass]} ${slotPrefix} ${tierTokenDict["all"]}`;
+        itemName = `${tierTokenDict[wowClass]} ${slotPrefix}}`;
       }
     }
 

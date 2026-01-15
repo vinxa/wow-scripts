@@ -58,7 +58,7 @@ function processWhItems(items, wowClass, wowSpec, isRaid) {
       if (isTier && itemName.indexOf(tierPhrase) !== -1) {
         const slotPrefix = tierSlotDict[slot];
         if (slotPrefix) {
-          itemName = `${tierTokenDict[wowClass]} ${slotPrefix} ${tierTokenDict["all"]}`;
+          itemName = `${tierTokenDict[wowClass]} ${slotPrefix}}`;
         }
       }
             // Direct BIS lookup
